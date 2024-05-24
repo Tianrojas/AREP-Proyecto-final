@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hello World</title>
+</head>
+<body>
+<h1>Hello <span id="username"></span>!</h1>
+<p>Your role is <span id="role"></span> and you are from <span id="city"></span>, I live in <span id="address">.</p>
+<p>The responded id is: <span id="id"></span></p>
+
+<script>
+  // Extraer el token de la URL
+  const token = window.location.hash.split('&')[0].split('=')[1];
+
+  // Decodificar el token JWT
+  const tokenPayload = JSON.parse(atob(token.split('.')[1]));
+
+  // Obtener los datos del token
+  const username = tokenPayload.nickname;
+  const role = tokenPayload.role;
+  const city = tokenPayload.city;
+  const id = tokenPayload.id;
+  const address = tokenPayload.address;
+
+  // Mostrar los datos en el HTML
+  document.getElementById('username').innerText = username;
+  document.getElementById('role').innerText = role;
+  document.getElementById('city').innerText = city;
+  document.getElementById('id').innerText = id;
+  document.getElementById('address').innerText = address;
+</script>
+</body>
+</html>

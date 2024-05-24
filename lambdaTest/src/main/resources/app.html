@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>app</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Welcome <span id="username"></span>!</h1>
+
+<div id="recipient" style="display: none;">
+    <h2>Recipient Section</h2>
+    <p>This content is for recipients only.</p>
+    <form id="recipient-form">
+        <label for="page">Page:</label>
+        <input type="number" id="pagerecipient" name="page" min="1" required>
+        <button type="submit">Fetch Foods</button>
+    </form>
+    <table id="recipient-foods-table" style="display: none;">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Quantity</th>
+            <th>Expiry Date</th>
+            <th>Need</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<div id="donner" style="display: none;">
+    <h2>Donner Section</h2>
+    <p>This content is for donners only.</p>
+    <h3>Your donations</h3>
+    <form id="donor-form">
+        <label for="page">Page:</label>
+        <input type="number" id="pagedonner" name="page" min="1" required>
+        <button type="submit">Fetch Foods</button>
+    </form>
+    <h3>Add New Food Donation</h3>
+    <form id="new-food-form">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required><br>
+        <label for="description">Description:</label>
+        <input type="text" id="description" name="description" required><br>
+        <label for="quantity">Quantity:</label>
+        <input type="number" id="quantity" name="quantity" min="1" required><br>
+        <label for="expiryDate">Expiry Date:</label>
+        <input type="date" id="expiryDate" name="expiryDate" required><br>
+        <button type="submit">Add Food</button>
+    </form>
+    <table id="foods-table" style="display: none;">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Quantity</th>
+            <th>Expiry Date</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script>
+    // Extraer el token de la URL
+    const token = window.location.hash.split('&')[0].split('=')[1];
+
+    // Decodificar el token JWT
+    const tokenPayload = JSON.parse(atob(token.split('.')[1]));
+
+    // Obtener los datos del token
+    const username = tokenPayload.nickname;
+    const role = tokenPayload.role;
+    const city = tokenPayload.city;
+    const id = tokenPayload.id;
+    const address = tokenPayload.address;
+
+    // Mostrar los datos en el HTML
+    document.getElementById('username').innerText = username;
+
+    // Mostrar el div correspondiente según el rol
+    if (role === 'recipient') {
+        document.getElementById('recipient').style.display = 'block';
+
+        // Configurar la acción del formulario con el ID del recipient
+        const recipientForm = document.getElementById('recipient-form');
+        recipientForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const page = document.getElementById('pagerecipient').value;
+
+            // Obtener la lista de donantes
+            fetch('https://94kd2yz2ie.execute-api.us-east-1.amazonaws.com/dev/donnors')
+                .then(response => response.json())
+                .then(donorIds => {
+                    if (typeof donorIds === 'string') {
+                        donorIds = JSON.parse(donorIds);
+                    }
+                    if (!Array.isArray(donorIds)) {
+                        console.error('Donor IDs response is not an array:', donorIds);
+                        return;
+                    }
+
+                    const table = document.getElementById('recipient-foods-table');
+                    const tbody = table.querySelector('tbody');
+                    tbody.innerHTML = ''; // Limpiar cualquier dato previo
+
+                    // Para cada donante, obtener sus alimentos
+                    donorIds.forEach(donorId => {
+                        const url = `https://94kd2yz2ie.execute-api.us-east-1.amazonaws.com/dev/foods?donnorID=${donorId}&page=${page}`;
+                        fetch(url)
+                            .then(response => response.json())
+                            .then(foods => {
+                                if (typeof foods === 'string') {
+                                    foods = JSON.parse(foods);
+                                }
+                                if (!Array.isArray(foods)) {
+                                    console.error('Foods response is not an array:', foods);
+                                    return;
+                                }
+
+                                foods.forEach(food => {
+                                    const row = document.createElement('tr');
+
+                                    const nameCell = document.createElement('td');
+                                    nameCell.innerText = food.name;
+                                    row.appendChild(nameCell);
+
+                                    const descriptionCell = document.createElement('td');
+                                    descriptionCell.innerText = food.description;
+                                    row.appendChild(descriptionCell);
+
+                                    const quantityCell = document.createElement('td');
+                                    quantityCell.innerText = food.quantity;
+                                    row.appendChild(quantityCell);
+
+                                    const expiryDateCell = document.createElement('td');
+                                    expiryDateCell.innerText = new Date(food.expiryDate).toLocaleDateString();
+                                    row.appendChild(expiryDateCell);
+
+                                    const needCell = document.createElement('td');
+                                    const needInput = document.createElement('input');
+                                    needInput.type = 'number';
+                                    needInput.min = '1';
+                                    needCell.appendChild(needInput);
+                                    row.appendChild(needCell);
+
+                                    const actionsCell = document.createElement('td');
+                                    const requestButton = document.createElement('button');
+                                    requestButton.innerText = 'Request';
+                                    requestButton.addEventListener('click', () => {
+                                        const needValue = needInput.value;
+                                        if (confirm('Seguro quieres hacer el request, una vez hecho el donador te enviará el producto?')) {
+                                            const itemId = food._id.$oid;
+                                            fetch(`https://94kd2yz2ie.execute-api.us-east-1.amazonaws.com/dev/foods?item_id=${itemId}&number=${needValue}`, {
+                                                method: 'PUT'
+                                            })
+                                                .then(response => {
+                                                    if (response.ok) {
+                                                        alert(`El producto está en camino a ${city}, ${address}`);
+                                                    } else {
+                                                        alert('Error al realizar la solicitud.');
+                                                    }
+                                                })
+                                                .catch(error => {
+                                                    console.error('Error en la solicitud PUT:', error);
+                                                    alert('Error al realizar la solicitud.');
+                                                });
+                                        }
+                                    });
+                                    actionsCell.appendChild(requestButton);
+                                    row.appendChild(actionsCell);
+
+                                    tbody.appendChild(row);
+                                });
+                                table.style.display = 'table';
+                            })
+                            .catch(error => {
+                                console.error('Error fetching foods:', error);
+                            });
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching donors:', error);
+                });
+        });
+    } else if (role === 'donor') {
+        document.getElementById('donner').style.display = 'block';
+
+        // Configurar la acción del formulario con el ID del donor
+        const form = document.getElementById('donor-form');
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const page = document.getElementById('pagedonner').value;
+            const url = `https://94kd2yz2ie.execute-api.us-east-1.amazonaws.com/dev/foods?donnorID=${id}&page=${page}`;
+            console.log('Fetching URL:', url);
+
+            fetch(url)
+                .then(response => response.text()) // Obtener la respuesta como texto
+                .then(text => {
+                    console.log('Fetched text:', text);
+                    let data;
+                    try {
+                        data = JSON.parse(text); // Convertir el texto JSON a un objeto
+                        console.log('Parsed data:', data);
+                    } catch (error) {
+                        console.error('Error parsing JSON:', error);
+                        return;
+                    }
+
+                    // Convertir a un arreglo si es necesario
+                    if (!Array.isArray(data)) {
+                        try {
+                            data = JSON.parse(data); // Intentar parsear nuevamente
+                        } catch (error) {
+                            console.error('Error parsing array JSON:', error);
+                            return;
+                        }
+                    }
+
+                    if (!Array.isArray(data)) {
+                        console.error('Data is not an array:', data);
+                        return;
+                    }
+
+                    const table = document.getElementById('foods-table');
+                    const tbody = table.querySelector('tbody');
+                    tbody.innerHTML = ''; // Limpiar cualquier dato previo
+                    data.forEach(item => {
+                        const row = document.createElement('tr');
+
+                        const nameCell = document.createElement('td');
+                        nameCell.innerText = item.name;
+                        row.appendChild(nameCell);
+
+                        const descriptionCell = document.createElement('td');
+                        descriptionCell.innerText = item.description;
+                        row.appendChild(descriptionCell);
+
+                        const quantityCell = document.createElement('td');
+                        quantityCell.innerText = item.quantity;
+                        row.appendChild(quantityCell);
+
+                        const expiryDateCell = document.createElement('td');
+                        expiryDateCell.innerText = new Date(item.expiryDate).toLocaleDateString();
+                        row.appendChild(expiryDateCell);
+
+                        const actionsCell = document.createElement('td');
+                        const deleteButton = document.createElement('button');
+                        deleteButton.innerText = 'Delete';
+
+                        const item_id = item._id.$oid;
+
+                        deleteButton.addEventListener('click', () => {
+                            // Realizar solicitud DELETE para eliminar el item
+                            fetch(`https://94kd2yz2ie.execute-api.us-east-1.amazonaws.com/dev/foods?item_id=${item_id}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}` // Si necesitas autenticar
+                                }
+                            })
+                                .then(response => {
+                                    if (response.ok) {
+                                        row.remove(); // Eliminar la fila de la tabla
+                                        console.log(`Item ${item_id} deleted successfully`);
+                                    } else {
+                                        console.error(`Failed to delete item ${item_id}`);
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error deleting item:', error);
+                                });
+                        });
+
+                        actionsCell.appendChild(deleteButton);
+                        row.appendChild(actionsCell);
+
+                        tbody.appendChild(row);
+                    });
+                    table.style.display = 'table';
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                });
+        });
+
+        // Manejar el envío del formulario de nuevo alimento
+        const newFoodForm = document.getElementById('new-food-form');
+        newFoodForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const newFoodData = {
+                description: document.getElementById('description').value,
+                donnorID: id,
+                expiryDate: document.getElementById('expiryDate').value,
+                name: document.getElementById('name').value,
+                quantity: document.getElementById('quantity').value
+            };
+            fetch('https://94kd2yz2ie.execute-api.us-east-1.amazonaws.com/dev/foods', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` // Si necesitas autenticar
+                },
+                body: JSON.stringify(newFoodData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Food added:', data);
+                    alert('Food added successfully!');
+                    // Actualizar la tabla o realizar otras acciones necesarias
+                })
+                .catch(error => {
+                    console.error('Error adding food:', error);
+                });
+        });
+    }
+</script>
+</body>
+</html>

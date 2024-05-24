@@ -1,0 +1,83 @@
+USERS
+
+{
+  "_id": {
+    "$oid": "664e679c439b433a549d4e0b"
+  },
+  "name": "FruitFields",
+  "role": "donor",
+  "location": "Bogotá",
+  "address": "Avenida 456 #789",
+  "email": "fruitfields@example.com"
+}
+
+{
+  "_id": {
+    "$oid": "664f896d6c6fbe1ba14fa9b6"
+  },
+  "address": "Calle 123 #456",
+  "email": "saborfresco@example.com",
+  "location": "Bogotá",
+  "name": "SaborFresco",
+  "role": "donor"
+}
+
+{
+  "_id": {
+    "$oid": "664f89d56c6fbe1ba14fa9b7"
+  },
+  "address": "Calle 987 #654",
+  "email": "hopekitchen@example.com",
+  "location": "Bogotá",
+  "name": "HopeKitchen",
+  "role": "recipient"
+}
+
+FOODS
+
+{
+  "_id": {
+    "$oid": "664f77c9e6dce819b1f23f4f"
+  },
+  "name": "Pescados y mariscos",
+  "description": "Filetes de salmón y camarones frescos",
+  "quantity": 15,
+  "expiryDate": "2024-05-17",
+  "donnorID": "664e679c439b433a549d4e0b"
+}
+
+{
+  "_id": {
+    "$oid": "664f7b42bab8893388f48fd9"
+  },
+  "name": "Verduras frescas",
+  "description": "Tomates, cebollas y zanahorias frescas",
+  "quantity": 20,
+  "expiryDate": "2024-05-30",
+  "donnorID": "664e679c439b433a549d4e0b"
+}
+
+{
+  "_id": {
+    "$oid": "664f8aa11be5df1d2a99f976"
+  },
+  "name": "Retazos de panza",
+  "description": "Carne de res en buen estado",
+  "quantity": 10,
+  "expiryDate": "2024-06-01",
+  "donnorID": "664f896d6c6fbe1ba14fa9b6"
+}
+
+
+REQUESTS
+
+{
+  "requestID": ObjectId("609dd5473e74fd44cfb9f10d"),
+  "donnorID": "664e679c439b433a549d4e0b",
+  "food": "Verduras frescas",
+  "recipient": "HopeKitchen",
+  "location": "Bogotá",
+  "requestDate": "2024-05-11",
+  "details": "Necesitamos frutas frescas para distribuir entre las familias necesitadas.",
+  "quantity": 5
+}
